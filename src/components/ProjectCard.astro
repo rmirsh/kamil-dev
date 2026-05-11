@@ -1,0 +1,40 @@
+---
+interface Props {
+  name: string;
+  description: string | null;
+  language: string | null;
+  stars: number;
+  topics: string[];
+  url: string;
+  updatedAt: string;
+}
+const { name, description, language, stars, topics, url, updatedAt } = Astro.props;
+const year = new Date(updatedAt).getFullYear();
+---
+<a class="proj" href={url} target="_blank" rel="noopener noreferrer">
+  <div class="proj-head">
+    <span class="name">{name}</span>
+    {language && (
+      <>
+        <span class="sep">·</span>
+        <span class="meta">{language.toLowerCase()}</span>
+      </>
+    )}
+    {stars > 0 && (
+      <>
+        <span class="sep">·</span>
+        <span class="meta">★ {stars}</span>
+      </>
+    )}
+    <span class="proj-arrow">&gt;</span>
+  </div>
+  {description && <p class="proj-desc">{description}</p>}
+  <div class="proj-foot">
+    {topics.length > 0 && (
+      <div class="tags">
+        {topics.slice(0, 5).map(t => <span class="tag">{t}</span>)}
+      </div>
+    )}
+    <span class="year">[{year}]</span>
+  </div>
+</a>

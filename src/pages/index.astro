@@ -1,0 +1,101 @@
+---
+import IdeLayout from '../layouts/IdeLayout.astro';
+
+const codeLines = [
+/*  { c: 'comment', t: '&lt;!-- index.astro --&gt;' }, 
+  { c: '', t: '' },
+  */
+  { c: 'bracket', t: '&lt;', next: [{ c: 'tag', t: 'section' }, { c: 'bracket', t: ' ' }, { c: 'attr', t: 'class' }, { c: 'bracket', t: '=' }, { c: 'string', t: '"about"' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'bracket', t: '  &lt;', next: [{ c: 'tag', t: 'header' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'bracket', t: '    &lt;', next: [{ c: 'tag', t: 'h1' }, { c: 'bracket', t: '&gt;' }, { c: 'text', t: 'kamil' }, { c: 'bracket', t: '&lt;/' }, { c: 'tag', t: 'h1' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'bracket', t: '    &lt;', next: [{ c: 'tag', t: 'p' }, { c: 'bracket', t: ' ' }, { c: 'attr', t: 'class' }, { c: 'bracket', t: '=' }, { c: 'string', t: '"role"' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'text', t: '      python backend engineer' },
+  { c: 'bracket', t: '    &lt;/', next: [{ c: 'tag', t: 'p' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'bracket', t: '  &lt;/', next: [{ c: 'tag', t: 'header' }, { c: 'bracket', t: '&gt;' }] },
+  { c: '', t: '' },
+  { c: 'bracket', t: '  &lt;', next: [{ c: 'tag', t: 'p' }, { c: 'bracket', t: ' ' }, { c: 'attr', t: 'class' }, { c: 'bracket', t: '=' }, { c: 'string', t: '"bio"' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'text', t: '    i build async services,' },
+  { c: 'text', t: '    etl pipelines, and' },
+  { c: 'text', t: '    the occasional cli.' },
+  { c: 'bracket', t: '  &lt;/', next: [{ c: 'tag', t: 'p' }, { c: 'bracket', t: '&gt;' }] },
+  { c: '', t: '' },
+  { c: 'bracket', t: '  &lt;', next: [{ c: 'tag', t: 'div' }, { c: 'bracket', t: ' ' }, { c: 'attr', t: 'class' }, { c: 'bracket', t: '=' }, { c: 'string', t: '"stack"' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'comment', t: '    &lt;!-- python asyncio --&gt;' },
+  { c: 'comment', t: '    &lt;!-- fastapi postgres --&gt;' },
+  { c: 'comment', t: '    &lt;!-- kafka docker k8s --&gt;' },
+  { c: 'bracket', t: '  &lt;/', next: [{ c: 'tag', t: 'div' }, { c: 'bracket', t: '&gt;' }] },
+  { c: '', t: '' },
+  { c: 'bracket', t: '  &lt;', next: [{ c: 'tag', t: 'ul' }, { c: 'bracket', t: ' ' }, { c: 'attr', t: 'class' }, { c: 'bracket', t: '=' }, { c: 'string', t: '"contact"' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'text', t: '    &lt;li&gt;&gt; github.com/rmirsh&lt;/li&gt;' },
+  { c: 'text', t: '    &lt;li&gt;&gt; ayupovkamil@gmail.com&lt;/li&gt;' },
+  { c: 'text', t: '    &lt;li&gt;&gt; t.me/volk_till_i_die&lt;/li&gt;' },
+  { c: 'bracket', t: '  &lt;/', next: [{ c: 'tag', t: 'ul' }, { c: 'bracket', t: '&gt;' }] },
+  { c: 'bracket', t: '&lt;/', next: [{ c: 'tag', t: 'section' }, { c: 'bracket', t: '&gt;' }] },
+];
+
+type Token = { c: string; t: string };
+type Line = { c: string; t: string; next?: Token[] };
+
+function renderLine(line: Line): string {
+  if (line.next) {
+    const start = line.c ? `<span class="syn-${line.c}">${line.t}</span>` : line.t;
+    const rest = line.next.map(tok =>
+      tok.c ? `<span class="syn-${tok.c}">${tok.t}</span>` : tok.t
+    ).join('');
+    return start + rest;
+  }
+  if (!line.c) return line.t;
+  return `<span class="syn-${line.c}">${line.t}</span>`;
+}
+
+const stack = [
+  ['python', 'asyncio', 'fastapi', 'django'],
+  ['postgres', 'clickhouse', 'kafka', 'redis'],
+  ['docker', 'k8s', 'airflow', 'celery'],
+];
+---
+<IdeLayout title="kamil" section="about" currentPath="/">
+  <Fragment slot="code">
+    {codeLines.map((line, i) => (
+      <div class="code-line">
+        <span class="line-num">{i + 1}</span>
+        <span class="code-content" set:html={renderLine(line as Line)} />
+      </div>
+    ))}
+  </Fragment>
+
+  <Fragment slot="content">
+    <div class="display-text">kamil<span class="cursor"></span></div>
+
+    <p class="about-role">
+      <span class="en">python backend engineer</span>
+      <span class="ru">python backend разработчик</span>
+    </p>
+    <p class="about-bio">
+      <span class="en">i build async services, etl pipelines, and the occasional cli.
+      based in moscow. currently studying cs and writing a lot of python.</span>
+      <span class="ru">строю асинхронные сервисы, etl-пайплайны и иногда cli-инструменты.
+      нахожусь в москве. изучаю cs и пишу много python.</span>
+    </p>
+
+    <div class="section-label">
+      <span class="en">stack</span><span class="ru">стек</span>
+    </div>
+    {stack.map(group => (
+      <div class="stack-list">
+        {group.map(tag => <span class="tag">{tag}</span>)}
+      </div>
+    ))}
+
+    <div style="margin-top: var(--s-6)">
+      <div class="section-label">
+        <span class="en">contact</span><span class="ru">контакты</span>
+      </div>
+      <ul class="contact-list">
+        <li><a href="https://github.com/rmirsh" target="_blank" rel="noopener">&gt; github.com/rmirsh</a></li>
+        <li><a href="mailto:ayupovkamil@gmail.com">&gt; ayupovkamil@gmail.com</a></li>
+        <li><a href="https://t.me/volk_till_i_die" target="_blank" rel="noopener">&gt; t.me/volk_till_i_die</a></li>
+      </ul>
+    </div>
+  </Fragment>
+</IdeLayout>

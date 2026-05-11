@@ -1,0 +1,71 @@
+---
+import { getCollection } from 'astro:content';
+import IdeLayout from '../../layouts/IdeLayout.astro';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const posts = allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const codeLines = [
+/*
+  { html: '<span class="syn-comment">&lt;!-- blog/index.astro --&gt;</span>' },
+  { html: '' },
+  { html: '<span class="syn-comment">&lt;!--</span>' },
+  { html: '<span class="syn-comment">  content collection:</span>' },
+  { html: '<span class="syn-comment">  ./content/blog/*.mdx</span>' },
+  { html: '<span class="syn-comment">--&gt;</span>' },
+  { html: '' },
+  */
+  { html: '<span class="syn-bracket">&lt;</span><span class="syn-tag">section</span> <span class="syn-attr">class</span><span class="syn-bracket">=</span><span class="syn-string">"writing"</span><span class="syn-bracket">&gt;</span>' },
+  { html: '  <span class="syn-bracket">&lt;</span><span class="syn-tag">ul</span> <span class="syn-attr">class</span><span class="syn-bracket">=</span><span class="syn-string">"post-list"</span><span class="syn-bracket">&gt;</span>' },
+  ...posts.slice(0, 6).map(p => ({
+    html: `  <span class="syn-comment">&lt;!-- ${p.data.title} --&gt;</span>`,
+  })),
+  { html: '  <span class="syn-bracket">&lt;/</span><span class="syn-tag">ul</span><span class="syn-bracket">&gt;</span>' },
+  { html: '<span class="syn-bracket">&lt;/</span><span class="syn-tag">section</span><span class="syn-bracket">&gt;</span>' },
+];
+---
+<IdeLayout title="blog" section="writing" currentPath="/blog">
+  <Fragment slot="code">
+    {codeLines.map((line, i) => (
+      <div class="code-line">
+        <span class="line-num">{i + 1}</span>
+        <span class="code-content" set:html={line.html} />
+      </div>
+    ))}
+  </Fragment>
+
+  <Fragment slot="content">
+    <div class="display-text">
+      <span class="en">writing</span>
+      <span class="ru">посты</span>
+    </div>
+
+    <div class="section-label">
+      <span class="en">posts</span>
+      <span class="ru">посты</span>
+    </div>
+
+    {posts.length === 0 ? (
+      <p class="empty-state">
+        <span class="en">// no posts yet. soon.</span>
+        <span class="ru">// постов пока нет. скоро.</span>
+      </p>
+    ) : (
+      <div class="writing-list">
+        {posts.map(post => (
+          <a class="writing-item" href={`/blog/${post.slug}`}>
+            <time class="writing-date">
+              {post.data.date.toISOString().slice(0, 7)}
+            </time>
+            <div>
+              <div class="writing-title">{post.data.title}</div>
+              {post.data.blurb && (
+                <div class="writing-blurb">{post.data.blurb}</div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+  </Fragment>
+</IdeLayout>

@@ -1,0 +1,56 @@
+---
+interface Props {
+  currentPath: string;
+}
+const { currentPath } = Astro.props;
+
+const tabs = [
+  { label: 'index.py',    href: '/',         match: (p: string) => p === '/' },
+  { label: 'projects.py', href: '/projects', match: (p: string) => p.startsWith('/projects') },
+  { label: 'blog/',       href: '/blog',     match: (p: string) => p.startsWith('/blog') },
+];
+---
+<nav class="tab-bar" role="navigation" aria-label="site navigation">
+  {tabs.map(tab => (
+    <a
+      href={tab.href}
+      class:list={['tab', { active: tab.match(currentPath) }]}
+      aria-current={tab.match(currentPath) ? 'page' : undefined}
+    >
+      {tab.label}
+      <span class="close" aria-hidden="true">×</span>
+    </a>
+  ))}
+  <div class="tab-controls">
+    <button class="ctrl-btn" id="lang-btn" aria-label="toggle language">ru</button>
+    <button class="ctrl-btn" id="theme-btn" aria-label="toggle theme">◐</button>
+  </div>
+</nav>
+
+<script>
+  const langBtn = document.getElementById('lang-btn') as HTMLButtonElement | null;
+  const themeBtn = document.getElementById('theme-btn') as HTMLButtonElement | null;
+
+  function syncButtons() {
+    const lang = document.documentElement.dataset.lang ?? 'en';
+    const theme = document.documentElement.dataset.theme ?? 'dark';
+    if (langBtn) langBtn.textContent = lang === 'en' ? 'ru' : 'en';
+    if (themeBtn) themeBtn.textContent = theme === 'dark' ? '◑' : '◐';
+  }
+
+  langBtn?.addEventListener('click', () => {
+    const next = (document.documentElement.dataset.lang ?? 'en') === 'en' ? 'ru' : 'en';
+    document.documentElement.dataset.lang = next;
+    localStorage.setItem('lang', next);
+    syncButtons();
+  });
+
+  themeBtn?.addEventListener('click', () => {
+    const next = (document.documentElement.dataset.theme ?? 'dark') === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('theme', next);
+    syncButtons();
+  });
+
+  syncButtons();
+</script>

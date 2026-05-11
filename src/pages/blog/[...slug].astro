@@ -1,0 +1,63 @@
+---
+import { getCollection } from 'astro:content';
+import IdeLayout from '../../layouts/IdeLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map(post => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+
+const dateStr = post.data.date.toISOString().slice(0, 10);
+const tags = post.data.tags ?? [];
+
+const codeLines = [
+  { html: '<span class="syn-comment">---</span>' },
+  { html: `<span class="syn-attr">title</span><span class="syn-bracket">:</span> <span class="syn-string">"${post.data.title}"</span>` },
+  { html: `<span class="syn-attr">date</span><span class="syn-bracket">:</span>  <span class="syn-string">${dateStr}</span>` },
+  { html: `<span class="syn-attr">blurb</span><span class="syn-bracket">:</span> <span class="syn-string">"${post.data.blurb}"</span>` },
+  ...(tags.length > 0 ? [
+    { html: '<span class="syn-attr">tags</span><span class="syn-bracket">:</span>' },
+    ...tags.map(t => ({ html: `  <span class="syn-bracket">-</span> <span class="syn-string">${t}</span>` })),
+  ] : []),
+  { html: '<span class="syn-comment">---</span>' },
+  { html: '' },
+  { html: `<span class="syn-text"># ${post.data.title}</span>` },
+  { html: '' },
+  { html: '<span class="syn-comment">// content follows</span>' },
+];
+---
+<IdeLayout
+  title={post.data.title}
+  section={post.data.title}
+  currentPath="/blog"
+  description={post.data.blurb}
+>
+  <Fragment slot="code">
+    {codeLines.map((line, i) => (
+      <div class="code-line">
+        <span class="line-num">{i + 1}</span>
+        <span class="code-content" set:html={line.html} />
+      </div>
+    ))}
+  </Fragment>
+
+  <Fragment slot="content">
+    <a class="post-back" href="/blog">&lt; blog</a>
+
+    <h1 class="post-title">{post.data.title}</h1>
+    <div class="post-meta">
+      <time>{dateStr}</time>
+      {tags.map(t => <span class="tag">{t}</span>)}
+    </div>
+
+    <article class="post-content">
+      <Content />
+    </article>
+  </Fragment>
+</IdeLayout>

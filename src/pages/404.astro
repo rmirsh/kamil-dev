@@ -1,0 +1,29 @@
+---
+import IdeLayout from '../layouts/IdeLayout.astro';
+---
+<IdeLayout title="404" section="not found" currentPath="">
+  <Fragment slot="code">
+    <div class="code-line">
+      <span class="line-num">1</span>
+      <span class="code-content syn-comment">&lt;!-- 404.astro --&gt;</span>
+    </div>
+    <div class="code-line">
+      <span class="line-num">2</span>
+      <span class="code-content"></span>
+    </div>
+    <div class="code-line">
+      <span class="line-num">3</span>
+      <span class="code-content syn-comment">&lt;!-- file not found --&gt;</span>
+    </div>
+    <div class="code-line">
+      <span class="line-num">4</span>
+      <span class="code-content syn-comment">&lt;!-- errno: ENOENT --&gt;</span>
+    </div>
+  </Fragment>
+
+  <Fragment slot="content">
+    <div class="not-found-display">404</div>
+    <p class="not-found-msg">file not found.</p>
+    <p class="not-found-msg"><a href="/">→ back to home</a></p>
+  </Fragment>
+</IdeLayout>
