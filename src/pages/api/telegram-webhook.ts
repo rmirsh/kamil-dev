@@ -5,17 +5,51 @@ import type { APIRoute } from 'astro';
 const REPO = 'rmirsh/kamil-dev';
 const BRANCH = 'master';
 
-function parseMessage(text: string): {
-  title: string;
-  blurb: string;
-  body: string;
-  tags: string[];
-} {
+type TgEntity = { type: string; offset: number; length: number; language?: string };
+
+function applyEntities(text: string, entities: TgEntity[]): string {
+  if (!entities?.length) return text;
+
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const bytes = enc.encode(text);
+
+  // Work right-to-left so offsets stay valid after insertions
+  const sorted = [...entities]
+    .filter((e) => e.type === 'pre' || e.type === 'code')
+    .sort((a, b) => b.offset - a.offset);
+
+  const parts: string[] = [];
+  let tail = bytes.length;
+
+  for (const e of sorted) {
+    const start = e.offset;
+    const end = e.offset + e.length;
+    parts.unshift(dec.decode(bytes.slice(end, tail)));
+    const inner = dec.decode(bytes.slice(start, end));
+    if (e.type === 'pre') {
+      const lang = e.language ?? '';
+      parts.unshift(`\`\`\`${lang}\n${inner}\n\`\`\``);
+    } else {
+      parts.unshift(`\`${inner}\``);
+    }
+    tail = start;
+  }
+  parts.unshift(dec.decode(bytes.slice(0, tail)));
+  return parts.join('');
+}
+
+function parseMessage(
+  text: string,
+  entities?: TgEntity[],
+): { title: string; blurb: string; body: string; tags: string[] } {
+  const formatted = applyEntities(text, entities ?? []);
+
   const hashtagRegex = /#(\w+)/g;
-  const allHashtags = [...text.matchAll(hashtagRegex)].map((m) => m[1]);
+  const allHashtags = [...formatted.matchAll(hashtagRegex)].map((m) => m[1]);
   const tags = allHashtags.filter((t) => t !== 'site');
 
-  const cleanText = text
+  const cleanText = formatted
     .replace(/#\w+/g, '')
     .replace(/[ \t]+/g, ' ')
     .split('\n')
@@ -94,7 +128,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'GITHUB_TOKEN not set' }), { status: 500 });
   }
 
-  const { title, blurb, body, tags } = parseMessage(message.text);
+  const { title, blurb, body, tags } = parseMessage(message.text, message.entities);
   const date = new Date(message.date * 1000);
   const dateStr = date.toISOString().split('T')[0];
   const filename = `${dateStr}-tg${message.message_id}`;
