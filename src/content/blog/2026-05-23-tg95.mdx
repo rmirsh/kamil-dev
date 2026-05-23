@@ -10,65 +10,61 @@ blurb: "Как-то раз на собесе в Т-Банке, спросили 
 
 Итератор — это протокол, а не сущность
 
-Итератор в пито�```python
+Итератор в питоне — это не класс и не структура данных. Это протокол, то есть объект, у которого есть iter и next. ВСË. Если объект отвечает этим двум методам он итератор.
 
-�е — это не класс и не структура данных. Это протокол, то есть объект, у которого есть iter и next. ВСË. Если объект отвечает этим двум методам он итератор.
+Зачем он нужен? Чтобы отделить коллекцию от способа её перебора. Это паттерн из банды четырёх, ему лет больше, чем питону. У вас есть список, дерево, граф, поток байтов из сокета you name it. А есть код, который хочет это обойти. Итератор — прослойка между ними.
 
-Зачем он нужен? Чтобы от�
-
-```�елить коллекцию от способа её перебора. Это паттерн из банды четырёх, ему лет боль�```python
-
-�е, чем питону. У вас есть список, дерево, граф, поток байтов из сокета you na
-
-```me it. А есть код, который хочет это обойти. Итератор — прослойка между ними.
+```python
 
 class CountDown:
 
-def __init__(self, start):
+    def __init__(self, start):
 
-self.current = start
+        self.current = start
 
-def __iter__(self):
+    def __iter__(self):
 
-return self
+        return self
 
-def __next__(self):
+    def __next__(self):
 
-if self.current <= 0:
+        if self.current <= 0:
 
-raise StopIteration
+            raise StopIteration
 
-self.current -= 1
+        self.current -= 1
 
-return self.current + 1
+        return self.current + 1
 
 for n in CountDown(3):
 
-print(n) # 3, 2, 1
+    print(n)  # 3, 2, 1
+
+```
 
 Вот и весь итератор. Никакой магии.
 
 Генератор — это синтаксический сахар
 
-Писать классы с next руками мало кто хочет. Поэтому в питоне ес�```python
+Писать классы с next руками мало кто хочет. Поэтому в питоне есть yield:
 
-�ь yield:
+```python
 
 def countdown(start):
 
-while start > 0:
+    while start > 0:
 
-yield start
+        yield start
 
-start -= 1
+        start -= 1
 
 for n in countdown(3):
 
-print(n) # 3, 2, 1
+    print(n)  # 3, 2, 1
 
-Делает ровно то же самое. Под капотом питон сам генерирует объект с iter и next, сам сохраняет состояние между �
+```
 
-```�ызовами, сам кидает StopIteration когда функция заканчивается.
+Делает ровно то же самое. Под капотом питон сам генерирует объект с iter и next, сам сохраняет состояние между вызовами, сам кидает StopIteration когда функция заканчивается.
 
 Генератор — это итератор. Просто способ его создания другой. Можно через класс, можно через yield, можно через генераторное выражение (x for x in range(10)).
 
@@ -78,29 +74,33 @@ print(n) # 3, 2, 1
 
 В протоколе итератора нигде не написано, что next обязан что-то лениво вычислять. Можно написать итератор, который при создании прогружает всё в память и потом просто отдаёт по элементу:
 
+```python
+
 class BadIter:
 
-def __init__(self, n):
+    def __init__(self, n):
 
-self.data = [x*x for x in range(n)] # посчитали всё сразу
+        self.data = [x*x for x in range(n)]  # посчитали всё сразу
 
-self.i = 0
+        self.i = 0
 
-def __iter__(self):
+    def __iter__(self):
 
-return self
+        return self
 
-def __next__(self):
+    def __next__(self):
 
-if self.i >= len(self.data):
+        if self.i >= len(self.data):
 
-raise StopIteration
+            raise StopIteration
 
-val = self.data[self.i]
+        val = self.data[self.i]
 
-self.i += 1
+        self.i += 1
 
-return val
+        return val
+
+```
 
 Это валидный итератор. Никакой ленивости. Но снаружи неотличим от ленивого — тот же for x in ....
 
