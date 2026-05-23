@@ -17,7 +17,7 @@ curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" \
   -d "{
     \"url\": \"${WEBHOOK_URL}\",
     \"secret_token\": \"${SECRET}\",
-    \"allowed_updates\": [\"channel_post\"]
+    \"allowed_updates\": [\"channel_post\", \"edited_channel_post\"]
   }" | jq .
 
 echo ""

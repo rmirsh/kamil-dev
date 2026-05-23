@@ -3,16 +3,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const REPO = 'rmirsh/kamil-dev';
 const BRANCH = 'master';
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim()
-    .slice(0, 50);
-}
-
 function parseMessage(text: string): {
   title: string;
   blurb: string;
@@ -40,7 +30,26 @@ function parseMessage(text: string): {
   return { title, blurb, body, tags };
 }
 
-async function commitFile(path: string, content: string, token: string): Promise<void> {
+async function getFileSha(path: string, token: string): Promise<string | null> {
+  const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GitHub ${res.status}: ${await res.text()}`);
+  const data = await res.json() as { sha: string };
+  return data.sha;
+}
+
+async function commitFile(
+  path: string,
+  content: string,
+  token: string,
+  sha: string | null,
+): Promise<void> {
   const encoded = Buffer.from(content).toString('base64');
 
   const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
@@ -52,15 +61,15 @@ async function commitFile(path: string, content: string, token: string): Promise
       'X-GitHub-Api-Version': '2022-11-28',
     },
     body: JSON.stringify({
-      message: `post: ${path}`,
+      message: sha ? `post: update ${path}` : `post: ${path}`,
       content: encoded,
       branch: BRANCH,
+      ...(sha ? { sha } : {}),
     }),
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`GitHub ${res.status}: ${err}`);
+    throw new Error(`GitHub ${res.status}: ${await res.text()}`);
   }
 }
 
@@ -75,7 +84,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const update = req.body;
-  const message = update?.channel_post || update?.message;
+  const message = update?.channel_post || update?.edited_channel_post || update?.message;
+  const isEdit = !!update?.edited_channel_post;
 
   if (!message?.text || !message.text.includes('#site')) {
     return res.status(200).json({ ok: true, skipped: true });
@@ -89,16 +99,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { title, blurb, body, tags } = parseMessage(message.text);
   const date = new Date(message.date * 1000);
   const dateStr = date.toISOString().split('T')[0];
-  const slug = slugify(title);
-  const filename = `${dateStr}-${slug}`;
+  // stable filename tied to message_id so edits update the same file
+  const filename = `${dateStr}-tg${message.message_id}`;
+  const path = `src/content/blog/${filename}.mdx`;
 
   const tagsLine = tags.length ? `\ntags: [${tags.join(', ')}]` : '';
   const mdx = `---\ntitle: ${title}\ndate: ${dateStr}\nblurb: ${blurb}${tagsLine}\n---\n\n${body}\n`;
-  const path = `src/content/blog/${filename}.mdx`;
 
   try {
-    await commitFile(path, mdx, githubToken);
-    return res.status(200).json({ ok: true, path });
+    const sha = isEdit ? await getFileSha(path, githubToken) : null;
+    await commitFile(path, mdx, githubToken, sha);
+    return res.status(200).json({ ok: true, path, updated: isEdit });
   } catch (err) {
     console.error('webhook error:', err);
     return res.status(500).json({ error: String(err) });
