@@ -7,7 +7,10 @@ export default defineConfig({
   site: 'https://kamil.dev',
   markdown: {
     shikiConfig: {
-      theme: 'dark-plus',
+      themes: {
+        dark: 'dark-plus',
+        light: 'light-plus',
+      },
       transformers: [
         transformerRenderWhitespace({ position: 'leading' }),
       ],
