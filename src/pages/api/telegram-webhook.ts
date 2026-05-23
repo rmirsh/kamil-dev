@@ -7,36 +7,42 @@ const BRANCH = 'master';
 
 type TgEntity = { type: string; offset: number; length: number; language?: string };
 
+// Telegram offsets are UTF-16 code units — JS string.slice() matches that exactly.
 function applyEntities(text: string, entities: TgEntity[]): string {
   if (!entities?.length) return text;
 
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
-  const bytes = enc.encode(text);
-
-  // Work right-to-left so offsets stay valid after insertions
   const sorted = [...entities]
     .filter((e) => e.type === 'pre' || e.type === 'code')
     .sort((a, b) => b.offset - a.offset);
 
-  const parts: string[] = [];
-  let tail = bytes.length;
-
+  let result = text;
   for (const e of sorted) {
-    const start = e.offset;
-    const end = e.offset + e.length;
-    parts.unshift(dec.decode(bytes.slice(end, tail)));
-    const inner = dec.decode(bytes.slice(start, end));
+    const before = result.slice(0, e.offset);
+    const inner = result.slice(e.offset, e.offset + e.length);
+    const after = result.slice(e.offset + e.length);
     if (e.type === 'pre') {
       const lang = e.language ?? '';
-      parts.unshift(`\`\`\`${lang}\n${inner}\n\`\`\``);
+      result = `${before}\`\`\`${lang}\n${inner}\n\`\`\`${after}`;
     } else {
-      parts.unshift(`\`${inner}\``);
+      result = `${before}\`${inner}\`${after}`;
     }
-    tail = start;
   }
-  parts.unshift(dec.decode(bytes.slice(0, tail)));
-  return parts.join('');
+  return result;
+}
+
+function cleanOutsideCodeBlocks(text: string): string {
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return parts
+    .map((part, i) => {
+      if (i % 2 === 1) return part; // inside code fence — preserve as-is
+      return part
+        .replace(/#\w+/g, '')
+        .replace(/[ \t]+/g, ' ')
+        .split('\n')
+        .map((l) => l.trim())
+        .join('\n');
+    })
+    .join('');
 }
 
 function parseMessage(
@@ -49,19 +55,13 @@ function parseMessage(
   const allHashtags = [...formatted.matchAll(hashtagRegex)].map((m) => m[1]);
   const tags = allHashtags.filter((t) => t !== 'site');
 
-  const cleanText = formatted
-    .replace(/#\w+/g, '')
-    .replace(/[ \t]+/g, ' ')
-    .split('\n')
-    .map((l) => l.trim())
-    .join('\n')
-    .trim();
+  const cleanText = cleanOutsideCodeBlocks(formatted).trim();
 
   const lines = cleanText.split('\n').filter(Boolean);
   const title = lines[0] || 'untitled';
   const bodyLines = lines.slice(1).join('\n\n').trim();
   const body = bodyLines || title;
-  const blurb = bodyLines.slice(0, 160) || title.slice(0, 160);
+  const blurb = bodyLines.replace(/```[\s\S]*?```/g, '[code]').slice(0, 160) || title.slice(0, 160);
 
   return { title, blurb, body, tags };
 }
