@@ -30,21 +30,6 @@ function applyEntities(text: string, entities: TgEntity[]): string {
   return result;
 }
 
-function cleanOutsideCodeBlocks(text: string): string {
-  const parts = text.split(/(```[\s\S]*?```)/g);
-  return parts
-    .map((part, i) => {
-      if (i % 2 === 1) return part; // inside code fence — preserve as-is
-      return part
-        .replace(/#\w+/g, '')
-        .replace(/[ \t]+/g, ' ')
-        .split('\n')
-        .map((l) => l.trim())
-        .join('\n');
-    })
-    .join('');
-}
-
 function parseMessage(
   text: string,
   entities?: TgEntity[],
@@ -55,13 +40,26 @@ function parseMessage(
   const allHashtags = [...formatted.matchAll(hashtagRegex)].map((m) => m[1]);
   const tags = allHashtags.filter((t) => t !== 'site');
 
-  const cleanText = cleanOutsideCodeBlocks(formatted).trim();
+  // Split on code fences, clean only outside, preserve inside exactly
+  const parts = formatted.split(/(```[\s\S]*?```)/g);
+  const cleaned = parts
+    .map((part, i) => {
+      if (i % 2 === 1) return part;
+      return part
+        .replace(/#\w+/g, '')
+        .replace(/[ \t]+/g, ' ')
+        .split('\n')
+        .map((l) => l.trim())
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n'); // collapse excess blank lines
+    })
+    .join('');
 
-  const lines = cleanText.split('\n').filter(Boolean);
-  const title = lines[0] || 'untitled';
-  const bodyLines = lines.slice(1).join('\n\n').trim();
-  const body = bodyLines || title;
-  const blurb = bodyLines.replace(/```[\s\S]*?```/g, '[code]').slice(0, 160) || title.slice(0, 160);
+  const trimmed = cleaned.trim();
+  const firstNl = trimmed.indexOf('\n');
+  const title = (firstNl === -1 ? trimmed : trimmed.slice(0, firstNl)).trim() || 'untitled';
+  const body = firstNl === -1 ? title : trimmed.slice(firstNl + 1).trim() || title;
+  const blurb = body.replace(/```[\s\S]*?```/g, '[code]').slice(0, 160) || title.slice(0, 160);
 
   return { title, blurb, body, tags };
 }
