@@ -132,9 +132,12 @@ export const POST: APIRoute = async ({ request }) => {
   const filename = `${dateStr}-tg${message.message_id}`;
   const path = `src/content/blog/${filename}.mdx`;
 
+  const channelUsername = message.chat?.username ?? 'cyberdeedsdonedirtcheap';
+  const tgUrl = `https://t.me/${channelUsername}/${message.message_id}`;
+
   const q = (s: string) => `"${s.replace(/"/g, '\\"')}"`;
   const tagsLine = tags.length ? `\ntags: [${tags.map(q).join(', ')}]` : '';
-  const mdx = `---\ntitle: ${q(title)}\ndate: ${dateStr}\nblurb: ${q(blurb)}${tagsLine}\n---\n\n${body}\n`;
+  const mdx = `---\ntitle: ${q(title)}\ndate: ${dateStr}\nblurb: ${q(blurb)}${tagsLine}\ntgUrl: ${q(tgUrl)}\n---\n\n${body}\n`;
 
   try {
     const sha = isEdit ? await getFileSha(path, githubToken) : null;

@@ -568,6 +568,14 @@ html[data-theme='dark'] .post-content pre span {
 }
 .post-content a:hover { border-bottom-color: var(--syn-attr); }
 
+.post-tg-link {
+  font-size: var(--fs-12);
+  color: var(--syn-attr);
+  margin-left: auto;
+  transition: color var(--dur-base) var(--ease);
+}
+.post-tg-link:hover { color: var(--fg-0); }
+
 .post-back {
   font-size: var(--fs-12);
   color: var(--syn-attr);

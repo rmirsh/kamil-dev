@@ -15,6 +15,7 @@ const { Content } = await post.render();
 
 const dateStr = post.data.date.toISOString().slice(0, 10);
 const tags = post.data.tags ?? [];
+const tgUrl = post.data.tgUrl;
 
 const codeLines = [
   { html: '<span class="syn-comment">---</span>' },
@@ -54,6 +55,7 @@ const codeLines = [
     <div class="post-meta">
       <time>{dateStr}</time>
       {tags.map(t => <span class="tag">{t}</span>)}
+      {tgUrl && <a class="post-tg-link" href={tgUrl} target="_blank" rel="noopener">tg →</a>}
     </div>
 
     <article class="post-content">
