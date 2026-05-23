@@ -462,6 +462,7 @@ a { color: inherit; text-decoration: none; }
 
 .post-content {
   max-width: 580px;
+  font-size: var(--fs-14);
 }
 
 .post-content h1,
@@ -473,7 +474,7 @@ a { color: inherit; text-decoration: none; }
   margin-top: var(--s-7);
   margin-bottom: var(--s-3);
 }
-.post-content h1 { font-size: var(--fs-24); }
+.post-content h1 { font-size: var(--fs-20); }
 .post-content h2 { font-size: var(--fs-16); }
 .post-content h3 { font-size: var(--fs-14); }
 
@@ -493,7 +494,7 @@ a { color: inherit; text-decoration: none; }
 
 .post-content code {
   font-family: var(--font-mono);
-  font-size: 0.95em;
+  font-size: 0.9em;
   color: var(--syn-string);
   background: var(--bg-2);
   border: 1px solid var(--border-1);
@@ -502,18 +503,56 @@ a { color: inherit; text-decoration: none; }
 }
 
 .post-content pre {
-  background: var(--bg-1);
+  background: var(--bg-1) !important;
   border: 1px solid var(--border-1);
-  padding: var(--s-4);
+  padding: var(--s-3) 0;
   overflow-x: auto;
   margin-bottom: var(--s-4);
   border-radius: var(--r-sm);
+  font-size: var(--fs-13);
 }
 .post-content pre code {
   background: none;
   border: none;
   padding: 0;
-  color: var(--fg-0);
+  counter-reset: line;
+  display: block;
+}
+
+/* Shiki line wrappers — line numbers + indent dots */
+.post-content pre code .line {
+  display: block;
+  counter-increment: line;
+  padding-right: var(--s-4);
+  min-height: 1.5em;
+}
+.post-content pre code .line::before {
+  content: counter(line);
+  display: inline-block;
+  width: 2.5em;
+  padding-right: var(--s-3);
+  margin-right: var(--s-3);
+  text-align: right;
+  color: var(--fg-3);
+  border-right: 1px solid var(--border-1);
+  user-select: none;
+}
+
+/* Indent dots from transformerRenderWhitespace */
+.post-content pre code .space {
+  display: inline-block;
+  position: relative;
+}
+.post-content pre code .space::after {
+  content: '·';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  color: var(--fg-3);
+  opacity: 0.5;
+  font-size: 0.85em;
+  pointer-events: none;
 }
 
 .post-content a {

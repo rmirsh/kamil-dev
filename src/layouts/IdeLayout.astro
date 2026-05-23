@@ -14,9 +14,9 @@ const { title, section, currentPath, description = 'kamil — python backend eng
 // ASCII art background — diagonal tile of editor chars
 const CHARS = ['/', '-', '*', '+', '=', '\\'];
 let ascii = '';
-for (let r = 0; r < 200; r++) {
+for (let r = 0; r < 1000; r++) {
   let line = '';
-  for (let c = 0; c < 400; c++) {
+  for (let c = 0; c < 200; c++) {
     line += CHARS[(r * 3 + c * 2) % CHARS.length];
   }
   ascii += line + '\n';
