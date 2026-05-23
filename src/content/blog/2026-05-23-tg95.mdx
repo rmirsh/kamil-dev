@@ -17,27 +17,19 @@ blurb: "Как-то раз на собесе в Т-Банке, спросили 
 ```python
 
 class CountDown:
-
     def __init__(self, start):
-
         self.current = start
 
     def __iter__(self):
-
         return self
 
     def __next__(self):
-
         if self.current <= 0:
-
             raise StopIteration
-
         self.current -= 1
-
         return self.current + 1
 
 for n in CountDown(3):
-
     print(n)  # 3, 2, 1
 
 ```
@@ -51,15 +43,11 @@ for n in CountDown(3):
 ```python
 
 def countdown(start):
-
     while start > 0:
-
         yield start
-
         start -= 1
 
 for n in countdown(3):
-
     print(n)  # 3, 2, 1
 
 ```
@@ -77,27 +65,18 @@ for n in countdown(3):
 ```python
 
 class BadIter:
-
     def __init__(self, n):
-
         self.data = [x*x for x in range(n)]  # посчитали всё сразу
-
         self.i = 0
 
     def __iter__(self):
-
         return self
 
     def __next__(self):
-
         if self.i >= len(self.data):
-
             raise StopIteration
-
         val = self.data[self.i]
-
         self.i += 1
-
         return val
 
 ```
