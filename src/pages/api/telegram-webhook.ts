@@ -1,4 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+export const prerender = false;
+
+import type { APIRoute } from 'astro';
 
 const REPO = 'rmirsh/kamil-dev';
 const BRANCH = 'master';
@@ -50,7 +52,7 @@ async function commitFile(
   token: string,
   sha: string | null,
 ): Promise<void> {
-  const encoded = Buffer.from(content).toString('base64');
+  const encoded = btoa(unescape(encodeURIComponent(content)));
 
   const res = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
     method: 'PUT',
@@ -73,33 +75,28 @@ async function commitFile(
   }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'method not allowed' });
+export const POST: APIRoute = async ({ request }) => {
+  const secret = import.meta.env.TELEGRAM_WEBHOOK_SECRET;
+  if (secret && request.headers.get('x-telegram-bot-api-secret-token') !== secret) {
+    return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
   }
 
-  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (secret && req.headers['x-telegram-bot-api-secret-token'] !== secret) {
-    return res.status(401).json({ error: 'unauthorized' });
-  }
-
-  const update = req.body;
+  const update = await request.json();
   const message = update?.channel_post || update?.edited_channel_post || update?.message;
   const isEdit = !!update?.edited_channel_post;
 
   if (!message?.text || !message.text.includes('#site')) {
-    return res.status(200).json({ ok: true, skipped: true });
+    return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200 });
   }
 
-  const githubToken = process.env.GITHUB_TOKEN;
+  const githubToken = import.meta.env.GITHUB_TOKEN;
   if (!githubToken) {
-    return res.status(500).json({ error: 'GITHUB_TOKEN not set' });
+    return new Response(JSON.stringify({ error: 'GITHUB_TOKEN not set' }), { status: 500 });
   }
 
   const { title, blurb, body, tags } = parseMessage(message.text);
   const date = new Date(message.date * 1000);
   const dateStr = date.toISOString().split('T')[0];
-  // stable filename tied to message_id so edits update the same file
   const filename = `${dateStr}-tg${message.message_id}`;
   const path = `src/content/blog/${filename}.mdx`;
 
@@ -109,9 +106,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const sha = isEdit ? await getFileSha(path, githubToken) : null;
     await commitFile(path, mdx, githubToken, sha);
-    return res.status(200).json({ ok: true, path, updated: isEdit });
+    return new Response(JSON.stringify({ ok: true, path, updated: isEdit }), { status: 200 });
   } catch (err) {
     console.error('webhook error:', err);
-    return res.status(500).json({ error: String(err) });
+    return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
   }
-}
+};
