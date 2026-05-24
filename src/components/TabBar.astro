@@ -5,8 +5,8 @@ interface Props {
 const { currentPath } = Astro.props;
 
 const tabs = [
-  { label: 'index.py',    href: '/',         match: (p: string) => p === '/' },
-  { label: 'projects.py', href: '/projects', match: (p: string) => p.startsWith('/projects') },
+  { label: 'index.html',    href: '/',         match: (p: string) => p === '/' },
+  { label: 'projects.html', href: '/projects', match: (p: string) => p.startsWith('/projects') },
   { label: 'blog/',       href: '/blog',     match: (p: string) => p.startsWith('/blog') },
 ];
 ---
